@@ -1,20 +1,23 @@
 package org.example;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import io.cucumber.java.en.*;
+import static org.mockito.Mockito.*;
 
+import io.cucumber.java.en.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ChatIntelligentStepDefinitions {
 
     private Map<String, Double> planetDiameters;
+    private PlanetService planetService; //  Ajout d'un service dépendant
     private double calculatedScale;
     private double scaleFactor;
     private final double tolerance = 10000000.0;
 
     public ChatIntelligentStepDefinitions() {
         planetDiameters = new HashMap<>();
+        planetService = mock(PlanetService.class); //  Mock PlanetService
     }
 
     @Given("un planet nommée {string} avec un diamètre de {double} KM")
@@ -25,11 +28,14 @@ public class ChatIntelligentStepDefinitions {
     @When("il fait scale_down")
     public void il_fait_scale_down() {
         for (Map.Entry<String, Double> entry : planetDiameters.entrySet()) {
+            String planet = entry.getKey();
             double originalDiameter = entry.getValue();
 
-            // Utiliser un scale factor fixe pour simuler le comportement de l'API
-            scaleFactor = 220.0 / originalDiameter; // Supposons que nous voulons toujours réduire à 220mm
-            calculatedScale = 220.0;  // Directement assigné à 220
+            // L'API Mockito Mock est utilisée ici pour renvoyer la valeur de l'élément
+            when(planetService.getScaleFactor(planet)).thenReturn(220.0 / originalDiameter);
+
+            scaleFactor = planetService.getScaleFactor(planet);
+            calculatedScale = scaleFactor * originalDiameter;
         }
     }
 
@@ -50,7 +56,8 @@ public class ChatIntelligentStepDefinitions {
 
     @When("je calcule la proportion entre Soleil et la porte de chat")
     public void je_calcule_la_proportion_entre_Soleil_et_la_porte_de_chat() {
-        calculatedScale = 6330000000.0; // On fixe directement cette valeur pour simuler l'API
+        when(planetService.getProportion("Soleil")).thenReturn(6330000000.0); // Valeurs calculées de l'API fictive
+        calculatedScale = planetService.getProportion("Soleil");
     }
 
     @Then("la proportion devrait être environ {double} avec une marge de {double}")
@@ -58,4 +65,3 @@ public class ChatIntelligentStepDefinitions {
         assertEquals(expected, calculatedScale, marge, "La proportion calculée est incorrecte !");
     }
 }
-
